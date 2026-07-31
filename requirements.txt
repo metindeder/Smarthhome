@@ -1,0 +1,36 @@
+#pip install -r requirements.txt
+# ==========================================
+# 1. API ve Asenkron Arka Uç (Backend)
+# ==========================================
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic-settings
+
+# ==========================================
+# 2. İletişim ve Veri Sıkıştırma (NanoMQ)
+# ==========================================
+aiomqtt
+msgpack
+
+# ==========================================
+# 3. Yapay Zeka: Büyük Dil Modeli (LLM)
+# ==========================================
+# i7 işlemcide GGUF formatındaki modelleri (Mistral/Phi-3) 
+# en düşük gecikme ve AVX2/AVX-512 desteğiyle çalıştırmak için.
+llama-cpp-python
+
+# ==========================================
+# 4. Yapay Zeka: Ses Tanıma (STT)
+# ==========================================
+# Standart Whisper yerine INT8 kuantizasyonu ile 
+# CPU üzerinde 3-4 kat daha hızlı çalışan motor.
+faster-whisper
+
+# ==========================================
+# 5. Yapay Zeka: Semantik Yönlendirme
+# ==========================================
+# Gelen komutları vektörel olarak eşleştirmek için.
+# (Sadece CPU kullanacağımız için cpu versiyonu)
+faiss-cpu
+numpy
