@@ -1,0 +1,17 @@
+# Ortam ve Derleme Dosyaları
+__pycache__/
+*.py[cod]
+.env
+.DS_Store
+
+# Sanal Ortamlar
+.venv/
+env/
+miniconda3/
+
+# Model ve Vektör Veritabanı Dosyaları (Devasa dosyalar)
+*.gguf
+*.bin
+*.onnx
+*.pt
+faiss_index/
