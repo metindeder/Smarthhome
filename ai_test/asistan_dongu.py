@@ -16,10 +16,9 @@ MAX_BUFFER_CHUNKS = int((SAMPLE_RATE / CHUNK_SIZE) * BUFFER_SANIYE)
 print("📥 Gerekli modeller kontrol ediliyor...")
 download_models()
 
-print("🧠 Faster-Whisper (Optimizasyonlu Small/Base) yükleniyor...")
-# CPU için en optimize ve hafif CTranslate2 motoru
+print("🧠 Faster-Whisper (Dinamik Uyarlanabilir VAD Modu) yükleniyor...")
 whisper_model = WhisperModel(
-    "base",  # Dilersen "small" da yazabilirsin, CTranslate2 zaten int8 ile optimize eder
+    "base",  
     device="cpu",
     compute_type="int8",
     cpu_threads=6,
@@ -33,8 +32,8 @@ owwModel = Model(
 )
 
 print("\n==================================================")
-print("🎙️ AKILLI EV ASİSTANI DİNLEMEDE (Optimizasyonlu RAM Modu)...")
-print("👉 Tek nefeste söyleyebilirsin: 'Alexa, ışıkları aç'")
+print("🎙️ AKILLI EV ASİSTANI DİNLEMEDE (Gürültü Filtreli Dinamik Mod)...")
+print("👉 'Alexa' de, komutunu söyle ve normal şekilde dur. Kayıt anında bitecek!")
 print("==================================================\n")
 
 try:
@@ -57,27 +56,55 @@ try:
             
             if trigger_detected:
                 print(f"\n🚨 UYANDIRMA YAKALANDI!")
-                print("🎙️ Kayıt alınıyor...")
+                print("🎙️ Dinleniyor (Ortam gürültüsü analiz ediliyor ve komut bekleniyor)...")
                 
-                ek_kayit_suresi = 3
-                ek_kayit = sd.rec(int(ek_kayit_suresi * SAMPLE_RATE), samplerate=SAMPLE_RATE, channels=1, dtype='int16')
-                sd.wait()
+                # Geçmişteki 2 saniyelik buffer'ı al
+                gecmis_ses = list(audio_buffer)
+                aktif_kayit_parcalari = []
                 
-                gecmis_ses = np.concatenate(list(audio_buffer))
-                toplam_ses = np.concatenate((gecmis_ses, ek_kayit.flatten()))
+                # UYARLANABİLİR EŞİK (Adaptive Threshold):
+                son_gurultu_ornekleri = np.concatenate(gecmis_ses).astype(np.float32)
+                ortam_gurultusu = np.sqrt(np.mean(son_gurultu_ornekleri**2))
+                SES_ESIGI = max(ortam_gurultusu * 1.5, 300) 
                 
-                print("✅ Ses alındı, Whisper (RAM) çeviriyor...")
+                MAKSIMUM_SESSIZLIK_CHUNK = 10 
+                
+                sessizlik_sayaci = 0
+                konusma_baslandi_mi = False
+                maksimum_guvenlik_suresi = 8 
+                max_dongu = int((SAMPLE_RATE / CHUNK_SIZE) * maksimum_guvenlik_suresi)
+                
+                for _ in range(max_dongu):
+                    chunk, _ = stream.read(CHUNK_SIZE)
+                    parca = np.frombuffer(chunk, dtype=np.int16)
+                    aktif_kayit_parcalari.append(parca)
+                    
+                    rms = np.sqrt(np.mean(parca.astype(np.float32)**2))
+                    
+                    if rms > SES_ESIGI:
+                        konusma_baslandi_mi = True
+                        sessizlik_sayaci = 0 
+                    elif konusma_baslandi_mi:
+                        sessizlik_sayaci += 1
+                        if sessizlik_sayaci >= MAKSIMUM_SESSIZLIK_CHUNK:
+                            break
+                
+                gecmis_birlesik = np.concatenate(gecmis_ses)
+                ek_birlesik = np.concatenate(aktif_kayit_parcalari)
+                toplam_ses = np.concatenate((gecmis_birlesik, ek_birlesik))
+                
+                print("✅ Ses tamamlandı, Whisper işliyor...")
                 
                 audio_fp32 = toplam_ses.astype(np.float32) / 32768.0
                 
                 t_start = time.time()
                 segments, info = whisper_model.transcribe(
-                    audio_fp32,
-                    beam_size=1,
+                    audio_fp32, 
+                    beam_size=1, 
                     language="tr",
                     initial_prompt="Işıkları aç. Klimayı kapat. Televizyonu aç.",
                     vad_filter=True,
-                    vad_parameters=dict(min_silence_duration_ms=500)
+                    vad_parameters=dict(min_silence_duration_ms=400)
                 )
                 
                 komut_metni = ""
@@ -87,7 +114,8 @@ try:
                 komut_metni = komut_metni.strip()
                 t_end = time.time()
                 
-                komut_metni = re.sub(r'(?i)\b(?:alexa|aleksa)\b[,\.!?:;]*\s*', '', komut_metni).strip()
+                # "Alexa", "Aleksa" ve "Aleks'a" varyasyonlarını noktalama işaretleriyle birlikte temizle
+                komut_metni = re.sub(r'(?i)\b(?:alexa|aleksa|aleks[\'’]?a|alex[\'’]?a)\b[,\.!?:;]*\s*', '', komut_metni).strip()
 
                 print(f"⏱️ Çeviri Süresi: {t_end - t_start:.2f} saniye")
                 print(f"🗣️ Algılanan Net Komut: \"{komut_metni}\"")

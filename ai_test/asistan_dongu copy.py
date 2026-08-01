@@ -16,10 +16,10 @@ MAX_BUFFER_CHUNKS = int((SAMPLE_RATE / CHUNK_SIZE) * BUFFER_SANIYE)
 print("📥 Gerekli modeller kontrol ediliyor...")
 download_models()
 
-print("🧠 Faster-Whisper (STT) yükleniyor...")
-# OPTİMİZASYON 1: "small" yerine "base" modeli kullanıldı. Hız 3 kata kadar artacak!
+print("🧠 Faster-Whisper (Optimizasyonlu Small/Base) yükleniyor...")
+# CPU için en optimize ve hafif CTranslate2 motoru
 whisper_model = WhisperModel(
-    "small",  
+    "base",  # Dilersen "small" da yazabilirsin, CTranslate2 zaten int8 ile optimize eder
     device="cpu",
     compute_type="int8",
     cpu_threads=6,
@@ -33,7 +33,7 @@ owwModel = Model(
 )
 
 print("\n==================================================")
-print("🎙️ AKILLI EV ASİSTANI DİNLEMEDE (Whisper RAM Modu)...")
+print("🎙️ AKILLI EV ASİSTANI DİNLEMEDE (Optimizasyonlu RAM Modu)...")
 print("👉 Tek nefeste söyleyebilirsin: 'Alexa, ışıkları aç'")
 print("==================================================\n")
 
@@ -66,18 +66,16 @@ try:
                 gecmis_ses = np.concatenate(list(audio_buffer))
                 toplam_ses = np.concatenate((gecmis_ses, ek_kayit.flatten()))
                 
-                print("✅ Ses alındı, Whisper çeviriyor (RAM üzerinden)...")
+                print("✅ Ses alındı, Whisper (RAM) çeviriyor...")
                 
-                # OPTİMİZASYON 2: Diske yazmak yerine veriyi Whisper'ın okuyacağı float32 formatına çeviriyoruz
                 audio_fp32 = toplam_ses.astype(np.float32) / 32768.0
                 
                 t_start = time.time()
-                # OPTİMİZASYON 3: "initial_prompt" ile modeli akıllı ev komutlarına şartlıyoruz
                 segments, info = whisper_model.transcribe(
-                    audio_fp32, # Doğrudan RAM'deki veriyi verdik
+                    audio_fp32,
                     beam_size=1,
                     language="tr",
-                    initial_prompt="Işıkları aç. Klimayı kapat. Televizyonu aç.", 
+                    initial_prompt="Işıkları aç. Klimayı kapat. Televizyonu aç.",
                     vad_filter=True,
                     vad_parameters=dict(min_silence_duration_ms=500)
                 )
@@ -89,7 +87,6 @@ try:
                 komut_metni = komut_metni.strip()
                 t_end = time.time()
                 
-                # "Alexa/Aleksa" temizliği
                 komut_metni = re.sub(r'(?i)\b(?:alexa|aleksa)\b[,\.!?:;]*\s*', '', komut_metni).strip()
 
                 print(f"⏱️ Çeviri Süresi: {t_end - t_start:.2f} saniye")
