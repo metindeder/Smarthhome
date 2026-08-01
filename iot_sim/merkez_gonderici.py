@@ -1,7 +1,12 @@
+import sys
 import asyncio
 import aiomqtt
 import msgpack
 import time
+
+# WINDOWS İÇİN KRİTİK ASENKRON YAMASI
+if sys.platform.lower() == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 async def main():
     # Modelden çıkan karar (Normalde bu bir JSON metni olurdu)

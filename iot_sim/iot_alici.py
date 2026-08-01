@@ -1,8 +1,14 @@
+import sys
 import asyncio
 import aiomqtt
 import msgpack
 
+# WINDOWS İÇİN KRİTİK ASENKRON YAMASI
+if sys.platform.lower() == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 async def main():
+
     # NanoMQ Broker'a bağlan
     async with aiomqtt.Client("127.0.0.1", port=1883) as client:
         # İlgili kanala abone ol
