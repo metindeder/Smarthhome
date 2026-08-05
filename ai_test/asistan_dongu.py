@@ -25,15 +25,15 @@ whisper_model = WhisperModel(
     num_workers=1
 )
 
-print("🦉 openWakeWord (Nöbetçi) yükleniyor...")
+print(" openWakeWord (Nöbetçi) yükleniyor...")
 owwModel = Model(
     wakeword_models=["alexa"],
     inference_framework="onnx"
 )
 
 print("\n==================================================")
-print("🎙️ AKILLI EV ASİSTANI DİNLEMEDE (Gürültü Filtreli Dinamik Mod)...")
-print("👉 'Alexa' de, komutunu söyle ve normal şekilde dur. Kayıt anında bitecek!")
+print(" AKILLI EV ASİSTANI DİNLEMEDE (Gürültü Filtreli Dinamik Mod)...")
+print("'Alexa' de, komutunu söyle ve normal şekilde dur. Kayıt anında bitecek!")
 print("==================================================\n")
 
 try:
@@ -55,8 +55,8 @@ try:
                     break
             
             if trigger_detected:
-                print(f"\n🚨 UYANDIRMA YAKALANDI!")
-                print("🎙️ Dinleniyor (Ortam gürültüsü analiz ediliyor ve komut bekleniyor)...")
+                print(f"\n UYANDIRMA YAKALANDI!")
+                print(" Dinleniyor (Ortam gürültüsü analiz ediliyor ve komut bekleniyor)...")
                 
                 # Geçmişteki 2 saniyelik buffer'ı al
                 gecmis_ses = list(audio_buffer)
@@ -102,7 +102,7 @@ try:
                     audio_fp32, 
                     beam_size=1, 
                     language="tr",
-                    initial_prompt="Işıkları aç. Klimayı kapat. Televizyonu aç.",
+                    initial_prompt="smart home assistant",
                     vad_filter=True,
                     vad_parameters=dict(min_silence_duration_ms=400)
                 )
