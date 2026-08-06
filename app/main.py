@@ -14,17 +14,17 @@ if sys.platform.lower() == "win32":
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 Sistem Başlatılıyor: Uvicorn & aiomqtt devrede...")
+    print("Sistem Başlatılıyor: Uvicorn & aiomqtt devrede...")
     
     # aiomqtt'nin zorunlu kıldığı güvenli ve asenkron bağlantı bloğu
     async with aiomqtt.Client("127.0.0.1", port=1883) as client:
         # Bağlanan istemciyi servise devret
         mqtt_client.client = client
-        print("✅ MQTT Bağlantısı Başarılı (Asenkron NanoMQ - 127.0.0.1:1883)")
+        print("MQTT Bağlantısı Başarılı (Asenkron NanoMQ - 127.0.0.1:1883)")
         
         yield # FastAPI burada çalışmaya başlar
         
-    print("🛑 Sistem Kapatılıyor: Tüm süreçler durduruldu.")
+    print("Sistem Kapatılıyor: Tüm süreçler durduruldu.")
 
 app = FastAPI(
     title="Edge AI Akıllı Ev Merkezi",

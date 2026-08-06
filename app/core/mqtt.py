@@ -7,7 +7,7 @@ class MQTTServisi:
 
     async def komut_gonder(self, topic: str, veri: dict):
         if not self.client:
-            print("⚠️ Hata: MQTT bağlantısı aktif değil!")
+            print("Hata: MQTT bağlantısı aktif değil!")
             return
 
         # Veriyi MsgPack ile ultra hızlı binary formata sıkıştır

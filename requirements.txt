@@ -3,8 +3,10 @@ uvicorn
 pydantic-settings
 aiomqtt
 msgpack
+llama-cpp-python
+piper-tts
 faster-whisper 
 sounddevice 
 numpy 
 scipy
-openwakeword
+openwakeword

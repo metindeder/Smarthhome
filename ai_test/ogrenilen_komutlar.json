@@ -1,0 +1,15 @@
+{
+  "tam_eslesmeler": {
+    "çay makinesini çalıştır": {
+      "cihaz": "çay makinesi",
+      "aksiyon": "ayarla",
+      "deger": null
+    }
+  },
+  "cihaz_desenleri": [
+    {
+      "desen": "çay\\s+makine",
+      "isim": "çay makinesi"
+    }
+  ]
+}

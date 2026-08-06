@@ -114,14 +114,193 @@ print(f"✅ KV-cache hazır! (ısınma süresi: {_isinma_ms:.0f} ms)")
 print("-" * 55)
 
 # =============================================================================
-# 6. ÇIKARIM FONKSİYONU
+# 6. HIZLI REGEX PARSER
+#    Tanınan cihaz + aksiyon çiftleri için LLM'i tamamen bypass eder.
+#    Her ikisi de eşleşirse: <5 ms  |  Biri eksikse: LLM'e düş
+# =============================================================================
+import re as _re, json as _json
+
+# Cihaz desenleri — uzun/spesifik olanlar önce gelir
+_CIHAZLAR = [
+    (r'mutfak\s+ışıklar',                'mutfak ışıkları'),
+    (r'salon\s+ışıklar',                 'salon ışıkları'),
+    (r'yatak\s+oda\S*\s+ışıklar',        'yatak odası ışıkları'),
+    (r'tv|televizyon|television',         'TV'),
+    (r'klima|air\s*cond',                 'klima'),
+    (r'müz[iı]|music|speaker',           'muzik'),
+    (r'perde|curtain|blind',             'perde'),
+    (r'vantilatör|fan\b',                'fan'),
+    (r'fırın|oven',                      'fırın'),
+    (r'dishwasher|bulaşık\s+mak',        'bulaşık makinesi'),
+    (r'washing\s+machine|çamaşır\s+mak', 'çamaşır makinesi'),
+    (r'lamba|ışıklar?|ampul|light|lamp', 'lamba'),
+]
+
+# Aksiyon desenleri — önce spesifik/uzun olanlar, "aç" en sona
+_AKSIYONLAR = [
+    (r'kapat|kapa\b|close|turn\s+off|söndür',      'kapat'),
+    (r'artır|y?ükselt|increase',                   'artir'),  # 🎯 Güncellenen satır
+    (r'azalt|düşür|kıs\b|decrease|lower',        'azalt'),
+    (r'ayarla|yap\b|set\b|değiştir|sabitle',       'ayarla'),
+    (r'durdur|dur\b|stop|pause|beklet',            'durdur'),
+    (r'başlat|çalıştır|oynat|play|start',         'baslat'),
+    (r'aç|open|turn\s+on|yak\b',                   'ac'),     # en sona — diğerlerinden sonra kontrol
+]
+
+_SAYI_RE = _re.compile(r'\b(\d+(?:[.,]\d+)?)\b')
+
+def regex_parse(komut: str) -> dict | None:
+    """
+    Hizli regex parser.
+    Eşleşme bulursa dict döner, bulamazsa None → LLM'e düş.
+    """
+    k = komut.lower()
+
+    cihaz = None
+    for desen, isim in _CIHAZLAR:
+        if _re.search(desen, k, _re.IGNORECASE):
+            cihaz = isim
+            break
+
+    aksiyon = None
+    for desen, eylem in _AKSIYONLAR:
+        if _re.search(desen, k, _re.IGNORECASE):
+            aksiyon = eylem
+            break
+
+    if not cihaz or not aksiyon:   # ikisi de gerekli
+        return None
+
+    m = _SAYI_RE.search(k)
+    deger = int(float(m.group(1).replace(',', '.'))) if m else None
+
+    return {"cihaz": cihaz, "aksiyon": aksiyon, "deger": deger}
+
+
+# =============================================================================
+# 7. ÖĞRENİCİ CACHE — Self-Learning Sistemi
+#    LLM yeni bir komut çözdükçe kalipları JSON dosyasına kaydeder.
+#    Sonraki aynı komut: <0.1 ms (tam eşleşme) ya da <1 ms (regex).
+# =============================================================================
+_STOPWORDS = {
+    # Türkçe
+    "bir", "bu", "şu", "ve", "ile", "için", "de", "da", "ki", "mu", "mı",
+    "mi", "mü", "misin", "mısın", "musun", "müsin", "bana", "beni", "lütfen",
+    "acaba", "şu", "onu", "sesi", "biraz",
+    # İngilizce
+    "the", "a", "an", "you", "can", "could", "would", "please", "start",
+    "turn", "make", "get", "put", "let", "set",
+}
+
+class OgreniciCache:
+    """
+    İki katmanlı öğrenme:
+      1. Tam eşleşme: normalize edilmiş komut → anında sonuç (<0.1 ms)
+      2. Cihaz deseni: yeni cihaz kelimesini _CIHAZLAR listesine dinamik ekler
+    """
+    DOSYA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "ogrenilen_komutlar.json")
+
+    def __init__(self):
+        self._veri = self._yukle()
+        self._tam: dict  = self._veri["tam_eslesmeler"]
+        self._cihazlar: list = self._veri["cihaz_desenleri"]
+        # Ogrenilenler calisan regex listesine ekle
+        for g in self._cihazlar:
+            if not any(d[0] == g["desen"] for d in _CIHAZLAR):
+                _CIHAZLAR.append((g["desen"], g["isim"]))
+
+    def _yukle(self) -> dict:
+        try:
+            with open(self.DOSYA, encoding="utf-8") as f:
+                return _json.load(f)
+        except (FileNotFoundError, _json.JSONDecodeError):
+            return {"tam_eslesmeler": {}, "cihaz_desenleri": []}
+
+    def _kaydet(self):
+        with open(self.DOSYA, "w", encoding="utf-8") as f:
+            _json.dump(self._veri, f, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def _normalize(metin: str) -> str:
+        return _re.sub(r'[?!.,;:\-]', '', metin.lower().strip())
+
+    def ara(self, komut: str) -> dict | None:
+        """Tam eşleşme cache'inde arar. Bulursa dict, yoksa None."""
+        return self._tam.get(self._normalize(komut))
+
+    def ogren(self, komut: str, sonuc: dict):
+        """
+        LLM sonuçundan yeni kalıp öğrenir:
+        - Tam eşleşme olarak kaydeder
+        - Cihazı statik listede yoksa yeni desen çıkarır
+        """
+        norm = self._normalize(komut)
+        cihaz = sonuc.get("cihaz", "")
+
+        # 1. Tam eşleşme kaydet
+        if norm not in self._tam:
+            self._tam[norm] = sonuc
+
+        # 2. Cihaz zaten bilinen bi desende var mı?
+        cihaz_biliniyor = any(
+            _re.search(d[0], cihaz.lower(), _re.IGNORECASE) for d in _CIHAZLAR
+        )
+        if not cihaz_biliniyor and cihaz:
+            # Komuttaki anlamlı kelimeleri çıkar
+            kelimeler = [
+                k for k in self._normalize(komut).split()
+                if len(k) > 2 and k not in _STOPWORDS
+            ]
+            if kelimeler:
+                # Keli melerin ilk 2'sini desen olarak kullan
+                desen = r'\s+'.join(
+                    _re.escape(k[:6]) for k in kelimeler[:2]
+                )
+                yeni = {"desen": desen, "isim": cihaz}
+                self._cihazlar.append(yeni)
+                _CIHAZLAR.append((desen, cihaz))   # çalışan listeye de ekle
+                print(f"  📚 Öğrenildi → desen: '{desen}' â cihaz: '{cihaz}'")
+
+        self._kaydet()
+
+    def istatistik(self) -> str:
+        return (f"{len(self._tam)} tam eşleşme | "
+                f"{len(self._cihazlar)} öğrenilmiş cihaz deseni")
+
+
+cache = OgreniciCache()
+print(f"💡 Öğrenen cache yüklendi: {cache.istatistik()}")
+print("-" * 55)
+
+# =============================================================================
+# 8. ÇIKARIM FONKSİYONU — Hybrid: Cache → Regex → LLM → Öğren
 # =============================================================================
 def komut_isle(komut_metni: str, etiket: str = "TEST"):
     print(f"\n[{etiket}]")
-    print(f"  🎙️  Komut : '{komut_metni}'")
+    print(f"  🎤  Komut : '{komut_metni}'")
 
     t0 = time.perf_counter()
 
+    # ——— YOL 1: Öğrenilmiş tam eşleşme cache (<0.1 ms) ———
+    ogrenilmis = cache.ara(komut_metni)
+    if ogrenilmis:
+        sure_ms = (time.perf_counter() - t0) * 1000
+        print(f"  ⏱️  Süre       : {sure_ms:.2f} ms  [📂 CACHE]")
+        print(f"  📦  JSON       : {_json.dumps(ogrenilmis, ensure_ascii=False)}")
+        print("-" * 55)
+        return ogrenilmis
+
+    # ——— YOL 2: Regex (statik + öğrenilmiş desenler, <1 ms) ———
+    hizli = regex_parse(komut_metni)
+    if hizli:
+        sure_ms = (time.perf_counter() - t0) * 1000
+        print(f"  ⏱️  Süre       : {sure_ms:.2f} ms  [⚡ REGEX]")
+        print(f"  📦  JSON       : {_json.dumps(hizli, ensure_ascii=False)}")
+        print("-" * 55)
+        return hizli
+
+    # ——— YOL 3: LLM (~700 ms, ilk kez görülen komut) ———
     sonuc = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -129,7 +308,7 @@ def komut_isle(komut_metni: str, etiket: str = "TEST"):
         ],
         max_tokens=40,
         temperature=0.0,
-        repeat_penalty=1.0,   # 🚀 temperature=0 ile repeat_penalty gereksiz yük
+        repeat_penalty=1.0,
         grammar=grammar,
     )
 
@@ -139,16 +318,30 @@ def komut_isle(komut_metni: str, etiket: str = "TEST"):
     prefill_tok    = sonuc["usage"]["prompt_tokens"]
     tok_per_sn     = (completion_tok / sure_ms) * 1000 if sure_ms > 0 else 0
 
-    print(f"  ⏱️  Süre       : {sure_ms:.0f} ms")
+    print(f"  ⏱️  Süre       : {sure_ms:.0f} ms  [🧠 LLM]")
     print(f"  ⚡  Throughput : {tok_per_sn:.1f} tok/s  ({completion_tok} gen + {prefill_tok} prefill)")
     print(f"  📦  JSON       : {json_ciktisi}")
     print("-" * 55)
 
+    # ——— YOL 3b: LLM sonuçtan öğren ———
+    try:
+        sonuc_dict = _json.loads(json_ciktisi)
+        cache.ogren(komut_metni, sonuc_dict)
+    except _json.JSONDecodeError:
+        pass  # Geçersiz JSON — öğrenme
+
+    return json_ciktisi
+
 # =============================================================================
-# 7. TEST SENARYOLARI
+# 9. TEST SENARYOLARI
 # =============================================================================
-komut_isle("open the tv",              "TEST 1 — KV-CACHE İLE (1. çağrı)")
-komut_isle("Mutfak ışıklarını kapat",  "TEST 2 — WARM (Türkçe kapat)")
-komut_isle("Televizyonu açar mısın?",  "TEST 3 — WARM (Türkçe soru)")
-komut_isle("Klima sıcaklığını 22 yap", "TEST 4 — WARM (değer ile)")
-komut_isle("Müziği durdur",            "TEST 5 — WARM (durdur)")
+# ⚡ Regex yolu
+komut_isle("open the tv",                   "TEST 1 — REGEX")
+komut_isle("Mutfak ışıklarını kapat",       "TEST 2 — REGEX")
+komut_isle("Televizyonu açar mısın?",       "TEST 3 — REGEX")
+komut_isle("Klima sıcaklığını 22 yap",      "TEST 4 — REGEX")
+komut_isle("Müziği durdur",                 "TEST 5 — REGEX")
+# 🧠 LLM yolu — yeni komut, cache'e eklenecek
+komut_isle("Çay makinesini çalıştır",          "TEST 6 — LLM (öğreniyor)")
+# 📂 Cache yolu — ayni komut tekrar geldi
+komut_isle("Çay makinesini çalıştır",          "TEST 7 — CACHE (ilk seferden sonra)")
