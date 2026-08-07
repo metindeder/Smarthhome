@@ -64,6 +64,36 @@
       "cihaz": "muzik",
       "aksiyon": "ayarla",
       "deger": 25
+    },
+    "aleks'e kilayima 25 dereceye ayarla": {
+      "cihaz": "muzik",
+      "aksiyon": "ayarla",
+      "deger": 25
+    },
+    "klimayi yeni bes derece egerla  klimayi yeni bes": {
+      "cihaz": "klima",
+      "aksiyon": "ayarla",
+      "deger": null
+    },
+    "klimaya 30 d": {
+      "cihaz": "klima",
+      "aksiyon": "ayarla",
+      "deger": 30
+    },
+    "klima'ya yeni": {
+      "cihaz": "klima",
+      "aksiyon": "ayarla",
+      "deger": null
+    },
+    "klima'yi 25 derece ayirla": {
+      "cihaz": "klima",
+      "aksiyon": "ayarla",
+      "deger": 25
+    },
+    "aileksa firini 300 dereceye ayirma": {
+      "cihaz": "firin",
+      "aksiyon": "ayarla",
+      "deger": 300
     }
   },
   "cihaz_desenleri": []
