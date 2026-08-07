@@ -19,6 +19,51 @@
       "cihaz": "klima",
       "aksiyon": "ac",
       "deger": null
+    },
+    "klimehac": {
+      "cihaz": "klima",
+      "aksiyon": "ac",
+      "deger": null
+    },
+    "altsa klimayi 25 derece egerli": {
+      "cihaz": "klima",
+      "aksiyon": "ayarla",
+      "deger": 25
+    },
+    "kivima'yi 25 dereceye ayarli": {
+      "cihaz": "klima",
+      "aksiyon": "ayarla",
+      "deger": 25
+    },
+    "firina 250 be": {
+      "cihaz": "firin",
+      "aksiyon": "azalt",
+      "deger": 250
+    },
+    "firi ne ikim": {
+      "cihaz": "firin",
+      "aksiyon": "bilinmiyor",
+      "deger": null
+    },
+    "asti diyade": {
+      "cihaz": "perde",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "isitici yaj": {
+      "cihaz": "yatak odasi isiklari",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "isiti diye at": {
+      "cihaz": "muzik",
+      "aksiyon": "ayarla",
+      "deger": 1
+    },
+    "kiymayi 25 dereceye ayarli": {
+      "cihaz": "muzik",
+      "aksiyon": "ayarla",
+      "deger": 25
     }
   },
   "cihaz_desenleri": []

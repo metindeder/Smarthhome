@@ -304,11 +304,14 @@ bekleyen_lock = threading.Lock()
 def on_durum_connect(client, userdata, flags, rc):
     client.subscribe("ev/+/durum") # Tüm cihazların durum kanalını dinle
 
+from app.services.sesli_yanit import sesli_yanit  # Servisin import edildiğinden emin ol
+
 def on_durum_message(client, userdata, msg):
     try:
         payload = _json.loads(msg.payload.decode('utf-8'))
         if payload.get("durum") == "basarili":
             cihaz = payload.get("cihaz")
+            aksiyon = payload.get("aksiyon") # Aksiyon bilgisini de alıyoruz
             t_bitis = time.perf_counter()
             
             with bekleyen_lock:
@@ -323,11 +326,15 @@ def on_durum_message(client, userdata, msg):
                     if ogrenilecek:
                         cache.ogren(komut, sonuc)
                     
+                    # --- TOPLAM SÜRE HESABI (TTS BURAYA DAHİL EDİLMEZ) ---
                     asistan_ve_mqtt_ms = (t_bitis - t0) * 1000
                     toplam_ms = stt_ms + asistan_ve_mqtt_ms
                     
                     print(f"  [TEYİT] Cihaz onayladı -> Toplam Süre: {toplam_ms:.0f} ms")
                     print("-" * 55)
+                    
+                    # --- SÜRE HESAPLANDIKTAN SONRA SESLİ YANIT TETİKLENİR ---
+                    sesli_yanit.basarili(cihaz=cihaz, aksiyon=aksiyon)
     except Exception:
         pass
 
