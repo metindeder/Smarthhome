@@ -1,0 +1,25 @@
+{
+  "tam_eslesmeler": {
+    "kli mi ac": {
+      "cihaz": "klima",
+      "aksiyon": "ac",
+      "deger": null
+    },
+    "klimayi 25 derece agirla": {
+      "cihaz": "klima",
+      "aksiyon": "ayarla",
+      "deger": 25
+    },
+    "kli mayi ac": {
+      "cihaz": "klima",
+      "aksiyon": "ac",
+      "deger": null
+    },
+    "kli mayac": {
+      "cihaz": "klima",
+      "aksiyon": "ac",
+      "deger": null
+    }
+  },
+  "cihaz_desenleri": []
+}

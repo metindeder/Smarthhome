@@ -1,38 +1,16 @@
+"""
+app/main.py — Asistan Giris Noktasi
+"""
+
 import sys
-import asyncio
-import aiomqtt
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
+import os
 
-# Servisler ve Yönlendiriciler
-from app.core.mqtt import mqtt_client
-from app.api.cihaz_kontrol import router as cihaz_router
+# Her durumda Smarthome/ dizinini path'e ekle
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
 
-# WINDOWS ASENKRON YAMASI (Uvicorn bu satırı okuyacak ve kurallara uyacak!)
-if sys.platform.lower() == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+# Artik app paketi bulunabilir
+from app.core.asistan_dongu import baslat
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("Sistem Başlatılıyor: Uvicorn & aiomqtt devrede...")
-    
-    # aiomqtt'nin zorunlu kıldığı güvenli ve asenkron bağlantı bloğu
-    async with aiomqtt.Client("127.0.0.1", port=1883) as client:
-        # Bağlanan istemciyi servise devret
-        mqtt_client.client = client
-        print("MQTT Bağlantısı Başarılı (Asenkron NanoMQ - 127.0.0.1:1883)")
-        
-        yield # FastAPI burada çalışmaya başlar
-        
-    print("Sistem Kapatılıyor: Tüm süreçler durduruldu.")
-
-app = FastAPI(
-    title="Edge AI Akıllı Ev Merkezi",
-    lifespan=lifespan
-)
-
-app.include_router(cihaz_router, prefix="/api/v1", tags=["Cihaz Kontrolü"])
-
-@app.get("/")
-async def root():
-    return {"durum": "aktif", "sunucu": "Uvicorn"}
+baslat()
