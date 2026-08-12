@@ -224,6 +224,16 @@
       "cihaz": "muzik",
       "aksiyon": "durdur",
       "deger": null
+    },
+    "kremay'a aç": {
+      "cihaz": "klima",
+      "aksiyon": "ac",
+      "deger": null
+    },
+    "kulima'yı kapat": {
+      "cihaz": "klima",
+      "aksiyon": "kapat",
+      "deger": null
     }
   },
   "cihaz_desenleri": [

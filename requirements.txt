@@ -10,4 +10,4 @@ sounddevice
 numpy 
 scipy
 openwakeword
-deepfilternet
+deepfilternetspeechbrain

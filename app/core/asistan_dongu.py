@@ -19,6 +19,7 @@ from openwakeword.model import Model
 from faster_whisper import WhisperModel
 
 from .asistan_beyin import komut_isle
+from .biyometrik import dogrula as biyometrik_dogrula
 
 # --- DeepFilterNet (lazy-load: ilk kullanımda yüklenir) ---
 _df_model = None
@@ -157,6 +158,14 @@ def baslat():
                     audio_fp32 = gurultuden_arindir(toplam_ses, giris_sr=SAMPLE_RATE)
                     df_ms = (time.perf_counter() - t_df_start) * 1000
                     print(f"Gurultu arindirma tamamlandi ({df_ms:.0f}ms), Whisper isliyor...")
+
+                    # --- BİYOMETRİK DOĞRULAMA ---
+                    if not biyometrik_dogrula(audio_fp32, sr=SAMPLE_RATE):
+                        print("  [BİYOMETRİK] Yetkisiz ses! Komut reddedildi.")
+                        print("\nTekrar nobetciye donuluyor...\n")
+                        owwModel.reset()
+                        audio_buffer.clear()
+                        continue
 
                     t_start = time.perf_counter()
                     segments, _ = whisper_model.transcribe(
