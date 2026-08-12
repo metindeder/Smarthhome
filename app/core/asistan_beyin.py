@@ -130,41 +130,40 @@ print("-" * 55)
 # 6. HIZLI REGEX PARSER
 # =============================================================================
 _CIHAZLAR = [
-    (r'mutfak\s+isiklar',                'mutfak isiklari'),
-    (r'salon\s+isiklar',                 'salon isiklari'),
-    (r'yatak\s+oda\S*\s+isiklar',        'yatak odasi isiklari'),
-    (r'tv|televizyon|television',         'TV'),
-    (r'klima|air\s*cond',                 'klima'),
-    (r'muz[ii]|music|speaker',           'muzik'),
-    (r'perde|curtain|blind',             'perde'),
-    (r'vantilatör|van|fan\b',            'fan'),
-    (r'firin|oven',                      'firin'),
-    (r'dishwasher|bulasik\s+mak',        'bulasik makinesi'),
-    (r'washing\s+machine|camasir\s+mak', 'camasir makinesi'),
-    (r'lamba|isiklar?|ampul|light|lamp', 'lamba'),
-    (r'robot|supurge|süpürge', 'robot supurge'),
-    (r'kapi|kilit|kapı', 'kapi kilidi'),
-    (r'kahve|espresso', 'kahve makinesi'),
+    (r'mutfak\s+[iı]s[iı]klar',                          'mutfak isiklari'),
+    (r'salon\s+[iı]s[iı]klar',                           'salon isiklari'),
+    (r'yatak\s+oda\S*\s+[iı]s[iı]klar',                 'yatak odasi isiklari'),
+    (r'tv|televizyon|television',                         'TV'),
+    (r'klima|air\s*cond',                                 'klima'),
+    (r'mü?z[iı]k?|music|speaker',                        'muzik'),
+    (r'perde|curtain|blind',                              'perde'),
+    (r'vantilatör|vantilator|fan\b',                     'fan'),
+    (r'f[iı]r[iı]n|oven',                                'firin'),
+    (r'dishwasher|bula[sş][iı]k\s+mak',                 'bulasik makinesi'),
+    (r'washing\s+machine|çama[sş][iı]r\s+mak|camasir\s+mak', 'camasir makinesi'),
+    (r'lamba|[iı]s[iı]klar?|ampul|light|lamp',           'lamba'),
+    (r'robot|[sş]ü?pürge|supurge',                       'robot supurge'),
+    (r'kap[iı]|kilit',                                   'kapi kilidi'),
+    (r'kahve|espresso',                                   'kahve makinesi'),
 ]
 
 _AKSIYONLAR = [
-    (r'kapat|kapa\b|close|turn\s+off|sondur',      'kapat'),
-    (r'artir|y?ukselt|increase',                    'artir'),
-    (r'azalt|dusur|kis\b|decrease|lower',           'azalt'),
-    (r'ayarla|yap\b|set\b|degistir|sabitle',        'ayarla'),
-    (r'durdur|dur\b|stop|pause|beklet',             'durdur'),
-    (r'baslat|calistir|oynat|play|start',           'baslat'),
-    (r'ac|open|turn\s+on|yak\b',                    'ac'),
-    (r'kilitle|kapat', 'kilitle'),
-    (r'temizle|supur', 'temizle'),
+    (r'kapat|kapa\b|close|turn\s+off|söndür|sondur',     'kapat'),
+    (r'art[iı]r|yükselt|ukselt|increase',                'artir'),
+    (r'azalt|düşür|dusur|k[iı][sş]\b|decrease|lower',   'azalt'),
+    (r'ayarla|yap\b|set\b|de[gğ]i[sş]tir|sabitle',      'ayarla'),
+    (r'durdur|dur\b|stop|pause|beklet',                  'durdur'),
+    (r'ba[sş]lat|çal[iı][sş]t[iı]r|oynat|play|start',   'baslat'),
+    (r'aç|ac\b|open|turn\s+on|yak\b',                   'ac'),
+    (r'kilitle',                                          'kilitle'),
+    (r'temizle|süpür|supur',                              'temizle'),
 ]
 
 _SAYI_RE = _re.compile(r'\b(\d+(?:[.,]\d+)?)\b')
 
 
 def regex_parse(komut: str) -> dict | None:
-    k = turkce_temizle(komut) # Sadece bu satırı değiştiriyoruz
-    # ... (kodun geri kalanı aynı)
+    k = komut.lower()  # Turkce karakterler korunur, sadece kucuk harf
 
     cihaz = None
     for desen, isim in _CIHAZLAR:
@@ -185,18 +184,115 @@ def regex_parse(komut: str) -> dict | None:
     deger = int(float(m.group(1).replace(',', '.'))) if m else None
 
     return {"cihaz": cihaz, "aksiyon": aksiyon, "deger": deger}
-def turkce_temizle(metin: str) -> str:
-    """Türkçe karakterleri İngilizce eşdeğerlerine çevirir ve küçük harf yapar."""
-    tr_map = str.maketrans("ıöüşğçIİÖÜŞĞÇ", "iousgcIIOUSGC")
-    return metin.translate(tr_map).lower()
+
+
+# =============================================================================
+# 6.5 GÜVENİLİRLİK KONTROL KATMANI
+# =============================================================================
+# LLM'e gitmeden önce ve sonra iki kapı:
+#   KAPI-1 (pre-LLM)  : Giriş metni akıllı ev komutu gibi görünüyor mu?
+#   KAPI-2 (post-LLM) : LLM çıktısındaki cihaz/aksiyon girişle örtüşüyor mu?
+
+# Akıllı ev ile ilgili anahtar kelimeler (skor için)
+_AE_ANAHTAR = [
+    r'tv|televizyon|ekran|filmi?|diziy?i?',
+    r'klima|[iı]s[iı]tma|so[gğ]utma|hava',
+    r'lamba|[iı][sş][iı]k|ampul|ayd[iı]nlat',
+    r'mü?z[iı]k?|[sş]ark[iı]|radyo|ses|çal|oynat|durdur|duraklat',
+    r'perde|jaluz[iı]',
+    r'fan|vantilat[oö]r',
+    r'f[iı]r[iı]n|[fF]irin',
+    r'mutfak|salon|yatak\s*oda',
+    r'ac|aç|kapat|kapa\b|yak\b|söndür|sondur',
+    r'art[iı]r|azalt|yükselt|dü[sş]ür|ayarla',
+    r'ba[sş]lat|durdur|dur\b|beklet',
+    r'ev|oda|[sS]mart|home|cihaz',
+]
+_AE_ANAHTAR_RE = [_re.compile(p, _re.IGNORECASE) for p in _AE_ANAHTAR]
+
+# Minimum eşik: kaç farklı kategoride eşleşme gerekir?
+_GUVEN_ESIGI = 1  # En az 1 kategori eşleşmeli (çok düşük eşik, çok esnek)
+
+
+def _giris_guven_skoru(metin: str) -> int:
+    """Giriş metninin akıllı ev komutu kategorileriyle kaç farklı kategoride örtüştüğünü döndürür."""
+    return sum(1 for r in _AE_ANAHTAR_RE if r.search(metin))
+
+
+# Cihaz adı -> giriş metni için kontrol kelimeleri eşlemesi
+# NOT: Whisper bazen kelimeleri ortadan böler (örn: 'klimayı' -> 'kli mayi').
+#      Bu yüzden her cihaz için fonetik parçalı kalıplar da eklendi.
+_CIHAZ_DOGRULAMA = {
+    'TV':                    [r'tv|telev[iı]\s*z|televizyon|ekran|filmi?|diziy?i?'],
+    'klima':                 [r'klima|kl[iı]\s*m|[iı]s[iı]tma|so[gğ]utma|hava'],
+    'lamba':                 [r'lamba|lam\s*ba|[iı][sş][iı]k|ampul|ayd[iı]nlat|yak\b|söndür'],
+    'muzik':                 [r'mü?\s*z[iı]\s*k?|[sş]ark[iı]|radyo|ses|çal|oynat|durdur|duraklat'],
+    'mutfak isiklari':       [r'mutfak|mut\s*fak|[iı][sş][iı]k|lamba'],
+    'salon isiklari':        [r'salon|sal\s*on|[iı][sş][iı]k|lamba'],
+    'yatak odasi isiklari':  [r'yatak|ya\s*tak|oda|[iı][sş][iı]k|lamba'],
+    'perde':                 [r'perde|per\s*de|jaluz[iı]'],
+    'firin':                 [r'f[iı]\s*r[iı]\s*n'],
+    'fan':                   [r'fan\b|vantilat[oö]r'],
+}
+
+# Eylem kalıpları — giriş eylem bağlamını doğrulamak için
+_AKSIYON_DOGRULAMA = {
+    'ac':      r'aç|ac\b|open|turn\s*on|yak\b',
+    'kapat':   r'kapat|kapa\b|close|turn\s*off|söndür|sondur',
+    'artir':   r'art[iı]r|yükselt|increase',
+    'azalt':   r'azalt|dü[sş]ür|decrease',
+    'ayarla':  r'ayarla|set\b',
+    'durdur':  r'durdur|dur\b|stop|pause',
+    'baslat':  r'ba[sş]lat|oynat|play|start|çal',
+}
+
+
+def _cikti_dogrula(komut: str, sonuc: dict) -> bool:
+    """LLM çıktısının giriş metniyle mantıksal örtüşüp örtüşmediğini kontrol eder.
+
+    True  -> çıktı güvenilir, komut işlenebilir
+    False -> çıktı şüpheli, komut reddedilmeli
+
+    Strateji:
+      - Aksiyon giriş metninde net olarak bulunuyorsa (örn: 'aç', 'kapat'),
+        Whisper'ın fonetik hatası olduğu varsayılır ve cihaz doğrulaması atlanır.
+        Çünkü net eylem + bulanık cihaz adı = fonetik gürültü, sahte pozitif değil.
+      - Hem cihaz hem aksiyon için girişte hiçbir ipucu yoksa -> red.
+    """
+    cihaz = sonuc.get("cihaz", "bilinmiyor")
+    aksiyon = sonuc.get("aksiyon", "bilinmiyor")
+
+    # bilinmiyor zaten güvenli (reddediliyor üst katta)
+    if cihaz == "bilinmiyor" or aksiyon == "bilinmiyor":
+        return True
+
+    # Aksiyon girişte net geçiyor mu? (örn: 'aç', 'kapat', 'durdur')
+    aksiyon_deseni = _AKSIYON_DOGRULAMA.get(aksiyon)
+    aksiyon_eslesti = (
+        bool(_re.search(aksiyon_deseni, komut, _re.IGNORECASE))
+        if aksiyon_deseni else False
+    )
+
+    if aksiyon_eslesti:
+        # Net aksiyon var → fonetik cihaz hatası kabul edilir, geç
+        return True
+
+    # Aksiyon da belirsizse cihaz için ek kontrol yap
+    desenler = _CIHAZ_DOGRULAMA.get(cihaz, [])
+    if desenler:
+        eslesti = any(_re.search(p, komut, _re.IGNORECASE) for p in desenler)
+        if not eslesti:
+            return False  # Ne cihaz ne aksiyon girişte geçiyor -> şüpheli
+
+    return True
 
 
 # =============================================================================
 # 7. OGRENICI CACHE
 # =============================================================================
 _STOPWORDS = {
-    "bir", "bu", "su", "ve", "ile", "icin", "de", "da", "ki", "mu", "mi",
-    "misin", "misiniz", "musun", "bana", "beni", "lutfen", "acaba", "onu",
+    "bir", "bu", "şu", "ve", "ile", "için", "de", "da", "ki", "mü", "mi",
+    "misin", "misiniz", "musun", "bana", "beni", "lütfen", "acaba", "onu",
     "the", "a", "an", "you", "can", "could", "would", "please",
     "turn", "make", "get", "put", "let", "set",
 }
@@ -231,8 +327,9 @@ class OgreniciCache:
 
     @staticmethod
     def _normalize(metin: str) -> str:
+        # Noktalama temizle, kucuk harf yap; Turkce karakterler korunur
         temiz = _re.sub(r'[?!.,;:\-]', '', metin.strip())
-        return turkce_temizle(temiz) # Burada da temizleyiciyi çağırıyoruz
+        return temiz.lower()
 
     def ara(self, komut: str) -> dict | None:
         return self._tam.get(self._normalize(komut))
@@ -406,6 +503,12 @@ def komut_isle(komut_metni: str, etiket: str = "KOMUT", stt_ms: float = 0.0) -> 
         return hizli
 
     # YOL 3: LLM
+    # --- KAPI-1: Giriş güven skoru (pre-LLM filtresi) ---
+    skor = _giris_guven_skoru(komut_metni)
+    if skor < _GUVEN_ESIGI:
+        print(f"  [GÜVEN-KAPI-1] Skor {skor}/{len(_AE_ANAHTAR_RE)} — Akıllı ev komutu değil, LLM atlandı.")
+        return {"cihaz": "bilinmiyor", "aksiyon": "bilinmiyor", "deger": None}
+
     sonuc = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -429,6 +532,13 @@ def komut_isle(komut_metni: str, etiket: str = "KOMUT", stt_ms: float = 0.0) -> 
 
     try:
         sonuc_dict = _json.loads(json_ciktisi)
+
+        # --- KAPI-2: Çıktı mantık doğrulama (post-LLM filtresi) ---
+        if not _cikti_dogrula(komut_metni, sonuc_dict):
+            print(f"  [GÜVEN-KAPI-2] Çıktı giriş metniyle örtüşmüyor — Komut reddedildi.")
+            print(f"                 Cihaz '{sonuc_dict.get('cihaz')}' için girişte eşleşen kelime bulunamadı.")
+            return {"cihaz": "bilinmiyor", "aksiyon": "bilinmiyor", "deger": None}
+
         if sonuc_dict.get("cihaz") != "bilinmiyor":
             cihaz = sonuc_dict.get("cihaz")
             # Cihazdan onay gelene kadar bekleme odasına alıyoruz

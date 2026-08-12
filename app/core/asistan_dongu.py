@@ -5,7 +5,7 @@ ai_test/asistan_dongu.py (ses dinleme + wake-word + Whisper)
 ile ai_test/asistan_beyin.py (komut isleme) arasindaki kopru.
 
 Akis:
-    [Wake Word] -> [Whisper] -> komut_metni -> komut_isle()
+    [Wake Word] -> [DeepFilterNet] -> [Whisper] -> komut_metni -> komut_isle()
 """
 
 import time
@@ -19,6 +19,61 @@ from openwakeword.model import Model
 from faster_whisper import WhisperModel
 
 from .asistan_beyin import komut_isle
+
+# --- DeepFilterNet (lazy-load: ilk kullanımda yüklenir) ---
+_df_model = None
+_df_state = None
+_df_sr = None
+
+
+def _get_df():
+    """DeepFilterNet modelini bir kez yukler ve onbellekte tutar."""
+    global _df_model, _df_state, _df_sr
+    if _df_model is None:
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            from df.enhance import init_df  # noqa: F401
+        # init_df() -> (model, df_state, model_name_str)
+        # Gercek sample rate: df_state.sr()
+        _df_model, _df_state, _ = init_df()
+        _df_sr = _df_state.sr()
+        print(f"DeepFilterNet yuklendi (model SR={_df_sr} Hz)")
+    return _df_model, _df_state, _df_sr
+
+
+def gurultuden_arindir(audio_int16: np.ndarray, giris_sr: int = 16000) -> np.ndarray:
+    """
+    int16 ses dizisini DeepFilterNet ile temizler.
+    Donus: giris_sr oraninda float32 [-1, 1] dizi.
+    """
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        from df.enhance import enhance
+        import torch
+        import torchaudio
+
+    df_model, df_state, df_sr = _get_df()
+
+    # int16 -> float32 [-1, 1]
+    audio_f32 = audio_int16.astype(np.float32) / 32768.0
+
+    # DF modeli stereo/mono tensor bekler: (kanal, ornek)
+    tensor = torch.from_numpy(audio_f32).unsqueeze(0)  # (1, N)
+
+    # Giris SR != DF SR ise resample et
+    if giris_sr != df_sr:
+        tensor = torchaudio.functional.resample(tensor, giris_sr, df_sr)
+
+    # Gurultu arindirma
+    enhanced = enhance(df_model, df_state, tensor)  # (1, N) veya (N,)
+
+    # Cikis SR -> giris SR'e geri resample
+    if giris_sr != df_sr:
+        enhanced = torchaudio.functional.resample(enhanced, df_sr, giris_sr)
+
+    return enhanced.squeeze(0).numpy()
 
 # --- AYARLAR (ai_test/asistan_dongu.py ile ayni) ---
 SAMPLE_RATE = 16000
@@ -97,8 +152,11 @@ def baslat():
                         np.concatenate(aktif_kayit_parcalari),
                     ])
 
-                    print("Ses tamamlandi, Whisper isliyor...")
-                    audio_fp32 = toplam_ses.astype(np.float32) / 32768.0
+                    print("Ses tamamlandi, DeepFilterNet ile gurultu arindiriliyor...")
+                    t_df_start = time.perf_counter()
+                    audio_fp32 = gurultuden_arindir(toplam_ses, giris_sr=SAMPLE_RATE)
+                    df_ms = (time.perf_counter() - t_df_start) * 1000
+                    print(f"Gurultu arindirma tamamlandi ({df_ms:.0f}ms), Whisper isliyor...")
 
                     t_start = time.perf_counter()
                     segments, _ = whisper_model.transcribe(

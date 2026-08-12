@@ -124,7 +124,132 @@
       "cihaz": "muzik",
       "aksiyon": "durdur",
       "deger": null
+    },
+    "alim itenim ik yer gibi aileksa kadir bayyaj hizmet bey oguz kankan": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "alema yac": {
+      "cihaz": "lamba",
+      "aksiyon": "ac",
+      "deger": null
+    },
+    "hehe evelle hesabin": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "kondesiyom agustan sivir kendi meyaj": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "anexa claire mayaj": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "kale bayağı aç": {
+      "cihaz": "klima",
+      "aksiyon": "ac",
+      "deger": null
+    },
+    "perdiyatç": {
+      "cihaz": "perde",
+      "aksiyon": "baslat",
+      "deger": null
+    },
+    "perdikapat": {
+      "cihaz": "perde",
+      "aksiyon": "baslat",
+      "deger": null
+    },
+    "pendiye aç": {
+      "cihaz": "perde",
+      "aksiyon": "ac",
+      "deger": null
+    },
+    "perdiyaç ne": {
+      "cihaz": "perde",
+      "aksiyon": "baslat",
+      "deger": null
+    },
+    "perdika fakirat": {
+      "cihaz": "perde",
+      "aksiyon": "baslat",
+      "deger": null
+    },
+    "evet benim ben söyleyeyim": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "evdeyac": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "andi mi aç": {
+      "cihaz": "TV",
+      "aksiyon": "ac",
+      "deger": null
+    },
+    "kli mayaj": {
+      "cihaz": "klima",
+      "aksiyon": "ac",
+      "deger": null
+    },
+    "ferdiyaj": {
+      "cihaz": "firin",
+      "aksiyon": "bilinmiyor",
+      "deger": null
+    },
+    "tade mayaç": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "kli bay kapat": {
+      "cihaz": "klima",
+      "aksiyon": "kapat",
+      "deger": null
+    },
+    "deyip alır sessiz tamaraya ki ben": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "ayrıksa normal bir ses kaydı": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
     }
   },
-  "cihaz_desenleri": []
+  "cihaz_desenleri": [
+    {
+      "desen": "anexa\\s+claire",
+      "isim": "muzik"
+    },
+    {
+      "desen": "evet\\s+benim",
+      "isim": "muzik"
+    },
+    {
+      "desen": "evdeya",
+      "isim": "muzik"
+    },
+    {
+      "desen": "tade\\s+mayaç",
+      "isim": "muzik"
+    },
+    {
+      "desen": "deyip\\s+alır",
+      "isim": "muzik"
+    },
+    {
+      "desen": "ayrıks\\s+normal",
+      "isim": "muzik"
+    }
+  ]
 }
