@@ -94,6 +94,36 @@
       "cihaz": "firin",
       "aksiyon": "ayarla",
       "deger": 300
+    },
+    "aleksaz'un bir esno projelinde  kivirma yatacaksin": {
+      "cihaz": "lamba",
+      "aksiyon": "kapat",
+      "deger": 1
+    },
+    "ve adi civi lombaya asin": {
+      "cihaz": "lamba",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "ve arak alir": {
+      "cihaz": "muzik",
+      "aksiyon": "artir",
+      "deger": null
+    },
+    "soyle metinize iyi": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
+    },
+    "abone ol aleyk sagac": {
+      "cihaz": "perde",
+      "aksiyon": "azalt",
+      "deger": null
+    },
+    "ve su adi gunduz var diye calismayin": {
+      "cihaz": "muzik",
+      "aksiyon": "durdur",
+      "deger": null
     }
   },
   "cihaz_desenleri": []
