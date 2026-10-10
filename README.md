@@ -142,9 +142,6 @@ Smarthome/
 |   `-- tts/                             # Piper TTS Turkce ses modeli
 |       |-- tr_TR-fahrettin-medium.onnx
 |       `-- tr_TR-fahrettin-medium.onnx.json
-|-- akis diyagrami.drawio            # Duzenlenebilir Draw.io mimari semasi
-|-- akis diyagrami.drawio.png        # Render edilmis mimari akis diyagrami
-|-- akis_semasi.html                 # Web tabanli interaktif akis semasi
 |-- kayit.py                         # Biyometrik profil kayit ve test arayuzu
 |-- kayit_biyometrik.py              # Bagimsiz calisabilen biyometrik kayit araci
 |-- requirements.txt                 # Gerekli Python bagimliliklari
