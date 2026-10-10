@@ -68,74 +68,39 @@ flowchart LR
     subgraph Katman1 ["I. Ses Giris ve Biyometrik Guvenlik"]
         direction TB
         A1["1. Mikrofon Girisi\n(sounddevice 16 kHz Mono)"]
-        A2["2. Kayan Ses Tamponu\n(deque 2 sn gecmis ses)"]
-        A3["3. Wake Word Tespiti\n(openWakeWord - Alexa)"]
-        A4["4. Aktif Ses Kaydi\n(RMS ve VAD Esigi)"]
-        A5["5. Gurultu Arindirma\n(DeepFilterNet)"]
-        A6["6. Biyometrik Dogrulama\n(SpeechBrain ECAPA-TDNN)"]
-        A7["7. Konusma Tanima - STT\n(faster-whisper base)"]
-
-        %% Dikey hiyerarşiyi zorlayan görünmez bağlar
-        A1 ~~~ A2 ~~~ A3 ~~~ A4 ~~~ A5 ~~~ A6 ~~~ A7
-
-        %% Gerçek akış okları
-        A1 --> A2
-        A2 --> A3
-        A3 --> A4
-        A4 --> A5
-        A5 --> A6
-        A6 --> A7
+        A1 --> A2["2. Kayan Ses Tamponu\n(deque 2 sn gecmis ses)"]
+        A2 --> A3["3. Wake Word Tespiti\n(openWakeWord - Alexa)"]
+        A3 --> A4["4. Aktif Ses Kaydi\n(RMS ve VAD Esigi)"]
+        A4 --> A5["5. Gurultu Arindirma\n(DeepFilterNet)"]
+        A5 --> A6["6. Biyometrik Dogrulama\n(SpeechBrain ECAPA-TDNN)"]
+        A6 --> A7["7. Konusma Tanima - STT\n(faster-whisper base)"]
     end
 
     subgraph Katman2 ["II. Hibrit NLU ve Karar Motoru"]
         direction TB
         B1["1. Guvenlik Kapisi 1\n(Pre-LLM Baglam Filtresi)"]
-        B2["2. Yol 1: Dinamik Cache\n(Tam Eslesme <0.1 ms)"]
-        B3["3. Yol 2: Fonetik Regex\n(Kural Tabanli <1 ms)"]
-        B4["4. Yol 3: Yerel LLM\n(Qwen2.5-0.5B ~700 ms)"]
-        B5["5. Siki GBNF JSON Grameri\n(Cihaz/Aksiyon Siniri)"]
-        B6["6. Guvenlik Kapisi 2\n(Post-LLM Tutarlilik)"]
-        B7["7. Yapilandirilmis JSON Cikti\n({cihaz, aksiyon, deger})"]
-
-        %% Dikey hiyerarşiyi zorlayan görünmez bağlar
-        B1 ~~~ B2 ~~~ B3 ~~~ B4 ~~~ B5 ~~~ B6 ~~~ B7
-
-        %% Gerçek akış okları
-        B1 --> B2
-        B2 --> B3
-        B3 --> B4
-        B4 --> B5
-        B5 --> B6
-        B6 --> B7
+        B1 --> B2["2. Yol 1: Dinamik Cache\n(Tam Eslesme <0.1 ms)"]
+        B2 --> B3["3. Yol 2: Fonetik Regex\n(Kural Tabanli <1 ms)"]
+        B3 --> B4["4. Yol 3: Yerel LLM\n(Qwen2.5-0.5B ~700 ms)"]
+        B4 --> B5["5. Siki GBNF JSON Grameri\n(Cihaz/Aksiyon Siniri)"]
+        B5 --> B6["6. Guvenlik Kapisi 2\n(Post-LLM Tutarlilik)"]
+        B6 --> B7["7. Yapilandirilmis JSON Cikti\n({cihaz, aksiyon, deger})"]
     end
 
     subgraph Katman3 ["III. Cikti, MQTT ve Geri Bildirim"]
         direction TB
         C1["1. Bekleme Odasi\n(Teyit ve Gecikme Kuyrugu)"]
-        C2["2. MQTT Publisher\n(Topic: ev/{cihaz}/komut)"]
-        C3["3. IoT Donanim Simulatoru\n(sanal_cihazlar.py)"]
-        C4["4. Donanim Teyit Mesaji\n(Topic: ev/{cihaz}/durum)"]
-        C5["5. MQTT Dinleyici Thread\n(asistan_listener)"]
-        C6["6. Toplam Sure Hesabi\n(STT + AI + MQTT ms)"]
-        C7["7. Dogal Yerel TTS\n(Piper TTS tr_TR-fahrettin)"]
-        C8["8. Bekci Moduna Reset\n(openWakeWord Sifirlama)"]
-
-        %% Dikey hiyerarşiyi zorlayan görünmez bağlar
-        C1 ~~~ C2 ~~~ C3 ~~~ C4 ~~~ C5 ~~~ C6 ~~~ C7 ~~~ C8
-
-        %% Gerçek akış okları
-        C1 --> C2
-        C2 --> C3
-        C3 --> C4
-        C4 --> C5
-        C5 --> C6
-        C6 --> C7
-        C7 --> C8
+        C1 --> C2["2. MQTT Publisher\n(Topic: ev/{cihaz}/komut)"]
+        C2 --> C3["3. IoT Donanim Simulatoru\n(sanal_cihazlar.py)"]
+        C3 --> C4["4. Donanim Teyit Mesaji\n(Topic: ev/{cihaz}/durum)"]
+        C4 --> C5["5. MQTT Dinleyici Thread\n(asistan_listener)"]
+        C5 --> C6["6. Toplam Sure Hesabi\n(STT + AI + MQTT ms)"]
+        C6 --> C7["7. Dogal Yerel TTS\n(Piper TTS tr_TR-fahrettin)"]
+        C7 --> C8["8. Bekci Moduna Reset\n(openWakeWord Sifirlama)"]
     end
 
-    %% Katmanlar arası ana geçişler
-    A7 ==> B1
-    B7 ==> C1
+    A7 --> B1
+    B7 --> C1
     C8 -.-> A2
 ```
 
