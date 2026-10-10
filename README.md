@@ -104,10 +104,6 @@ flowchart LR
     C8 -.-> A2
 ```
 
-Proje kok dizininde yer alan detayli gorsel diyagramlar:
-- `akis diyagrami.drawio.png`: Sistemin yuksek cozunurluklu mimari akis gorseli.
-- `akis_semasi.html`: Tarayicida incelenebilen interaktif HTML akis tasarimi.
-
 ---
 
 ## Proje Dizin Yapisi
