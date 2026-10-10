@@ -19,3 +19,4 @@ miniconda3/
 *.drawio
 *.drawio.bkp
 faiss_index/
+ai_test/
