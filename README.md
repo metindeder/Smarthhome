@@ -64,9 +64,11 @@ Sistem, ortam sesini 16 kHz ornekleme ile kesintisiz tarar; ultra dusuk kaynak t
 Uctan uca ses komut isleme mimarisinin adim adim calisma dongusu asagidaki diyagramda gosterilmistir:
 
 ```mermaid
-flowchart TD
+flowchart LR
     subgraph Katman1 ["I. Ses Giris ve Biyometrik Guvenlik"]
-        A1["1. Mikrofon Girisi\n(sounddevice 16 kHz Mono)"] --> A2["2. Kayan Ses Tamponu\n(deque 2 sn gecmis ses)"]
+        direction TB
+        A1["1. Mikrofon Girisi\n(sounddevice 16 kHz Mono)"]
+        A1 --> A2["2. Kayan Ses Tamponu\n(deque 2 sn gecmis ses)"]
         A2 --> A3["3. Wake Word Tespiti\n(openWakeWord - Alexa)"]
         A3 --> A4["4. Aktif Ses Kaydi\n(RMS ve VAD Esigi)"]
         A4 --> A5["5. Gurultu Arindirma\n(DeepFilterNet)"]
@@ -75,7 +77,9 @@ flowchart TD
     end
 
     subgraph Katman2 ["II. Hibrit NLU ve Karar Motoru"]
-        B1["1. Guvenlik Kapisi 1\n(Pre-LLM Baglam Filtresi)"] --> B2["2. Yol 1: Dinamik Cache\n(Tam Eslesme <0.1 ms)"]
+        direction TB
+        B1["1. Guvenlik Kapisi 1\n(Pre-LLM Baglam Filtresi)"]
+        B1 --> B2["2. Yol 1: Dinamik Cache\n(Tam Eslesme <0.1 ms)"]
         B2 --> B3["3. Yol 2: Fonetik Regex\n(Kural Tabanli <1 ms)"]
         B3 --> B4["4. Yol 3: Yerel LLM\n(Qwen2.5-0.5B ~700 ms)"]
         B4 --> B5["5. Siki GBNF JSON Grameri\n(Cihaz/Aksiyon Siniri)"]
@@ -84,7 +88,9 @@ flowchart TD
     end
 
     subgraph Katman3 ["III. Cikti, MQTT ve Geri Bildirim"]
-        C1["1. Bekleme Odasi\n(Teyit ve Gecikme Kuyrugu)"] --> C2["2. MQTT Publisher\n(Topic: ev/{cihaz}/komut)"]
+        direction TB
+        C1["1. Bekleme Odasi\n(Teyit ve Gecikme Kuyrugu)"]
+        C1 --> C2["2. MQTT Publisher\n(Topic: ev/{cihaz}/komut)"]
         C2 --> C3["3. IoT Donanim Simulatoru\n(sanal_cihazlar.py)"]
         C3 --> C4["4. Donanim Teyit Mesaji\n(Topic: ev/{cihaz}/durum)"]
         C4 --> C5["5. MQTT Dinleyici Thread\n(asistan_listener)"]
@@ -93,8 +99,8 @@ flowchart TD
         C7 --> C8["8. Bekci Moduna Reset\n(openWakeWord Sifirlama)"]
     end
 
-    A7 ==> B1
-    B7 ==> C1
+    A7 --> B1
+    B7 --> C1
     C8 -.-> A2
 ```
 
