@@ -14,4 +14,8 @@ miniconda3/
 *.bin
 *.onnx
 *.pt
+*.png
+*.html
+*.drawio
+*.drawio.bkp
 faiss_index/

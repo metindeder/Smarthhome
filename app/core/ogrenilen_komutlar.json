@@ -234,6 +234,21 @@
       "cihaz": "klima",
       "aksiyon": "kapat",
       "deger": null
+    },
+    "kili mayı 25 derece ayarla": {
+      "cihaz": "muzik",
+      "aksiyon": "ayarla",
+      "deger": 25
+    },
+    "fırını 250 derece ağırla": {
+      "cihaz": "firin",
+      "aksiyon": "ayarla",
+      "deger": 250
+    },
+    "klima'ya 25'te": {
+      "cihaz": "klima",
+      "aksiyon": "ayarla",
+      "deger": 25
     }
   },
   "cihaz_desenleri": [
@@ -259,6 +274,10 @@
     },
     {
       "desen": "ayrıks\\s+normal",
+      "isim": "muzik"
+    },
+    {
+      "desen": "kili\\s+mayı",
       "isim": "muzik"
     }
   ]
