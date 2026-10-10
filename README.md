@@ -99,10 +99,22 @@ flowchart LR
         C7 --> C8["8. Bekci Moduna Reset\n(openWakeWord Sifirlama)"]
     end
 
-    A7 --> B1
-    B7 --> C1
-    C8 -.-> A2
+    Katman1 --> Katman2
+    Katman2 --> Katman3
 ```
+
+### Mimari Akis Katmanlari (Ozet Tablo)
+
+| I. Ses Giris ve Biyometrik Guvenlik | II. Hibrit NLU ve Karar Motoru | III. Cikti, MQTT ve Geri Bildirim |
+| :--- | :--- | :--- |
+| **1.** Mikrofon Girisi (16 kHz, Mono) | **1.** Guvenlik Kapisi 1 (Pre-LLM Filtresi) | **1.** Bekleme Odasi (Teyit Kuyrugu) |
+| **2.** Kayan Ses Tamponu (deque, 2 sn) | **2.** Yol 1: Dinamik Cache (<0.1 ms) | **2.** MQTT Publisher (`ev/{cihaz}/komut`) |
+| **3.** Wake Word Tespiti (Alexa) | **3.** Yol 2: Fonetik Regex (<1 ms) | **3.** IoT Simulatoru (`sanal_cihazlar.py`) |
+| **4.** Aktif Ses Kaydi (RMS / VAD) | **4.** Yol 3: Yerel LLM (Qwen2.5-0.5B ~700 ms) | **4.** Cihaz Teyit Mesaji (`ev/{cihaz}/durum`) |
+| **5.** Gurultu Arindirma (DeepFilterNet) | **5.** Siki GBNF JSON Gramer Denetimi | **5.** MQTT Listener (Asistan Dinleyici) |
+| **6.** Biyometrik Dogrulama (ECAPA-TDNN) | **6.** Guvenlik Kapisi 2 (Post-LLM Dogrulama) | **6.** Toplam Sure Hesabi (STT + AI + MQTT) |
+| **7.** Konusma Tanima - STT (faster-whisper) | **7.** Yapilandirilmis JSON Komut Paketi | **7.** Yerel Sesli Yanit (Piper TTS) |
+| | | **8.** Bekci Moduna Reset (openWakeWord) |
 
 ---
 
