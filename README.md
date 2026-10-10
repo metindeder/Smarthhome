@@ -65,49 +65,43 @@ Uctan uca ses komut isleme mimarisinin adim adim calisma dongusu asagidaki diyag
 
 ```mermaid
 flowchart LR
-    subgraph Katman1 ["I. Ses Giris ve Biyometrik Guvenlik Katmani"]
+    subgraph Katman1 ["I. Ses Giris ve Biyometrik Guvenlik"]
         direction TB
-        A["Mikrofon Girisi\n(16 kHz, Mono, sounddevice)"] --> B["Kayan Ses Tamponu\n(deque, 2 sn gecmis)"]
-        B --> C["Wake Word Tespiti\n(openWakeWord - Alexa)"]
-        C --> D{"Uyandirma Sinyali\nAlindi mi?"}
-        D -- "Hayir" --> B
-        D -- "Evet" --> E["Aktif Ses Kaydi\n(VAD / RMS Esik Algilama)"]
-        E --> F["Sinirsel Gurultu Filtreleme\n(DeepFilterNet)"]
-        F --> G["Biyometrik Dogrulama\n(SpeechBrain ECAPA-TDNN)"]
-        G -- "Yetkisiz (Skor < 0.50)" --> B
-        G -- "Yetkili (Skor >= 0.50)" --> H["Konusma Tanima - STT\n(faster-whisper base)"]
+        A1["1. Mikrofon Girisi\n(sounddevice 16 kHz Mono)"]
+        A1 --> A2["2. Kayan Ses Tamponu\n(deque 2 sn gecmis ses)"]
+        A2 --> A3["3. Wake Word Tespiti\n(openWakeWord - Alexa)"]
+        A3 --> A4["4. Aktif Ses Kaydi\n(RMS ve VAD Esigi)"]
+        A4 --> A5["5. Gurultu Arindirma\n(DeepFilterNet)"]
+        A5 --> A6["6. Biyometrik Dogrulama\n(SpeechBrain ECAPA-TDNN)"]
+        A6 --> A7["7. Konusma Tanima - STT\n(faster-whisper base)"]
     end
 
     subgraph Katman2 ["II. Hibrit NLU ve Karar Motoru"]
         direction TB
-        I{"Guvenlik Kapisi 1:\nPre-LLM Baglam Filtresi"}
-        I -- "Akilli Ev Komutu Degil" --> J["Reddet:\n{cihaz: bilinmiyor, aksiyon: bilinmiyor}"]
-        I -- "Gecerli Komut Baglami" --> K{"Yol 1:\nDinamik Ogrenici Cache"}
-        K -- "Tam Eslesme Var (<0.1 ms)" --> Q["JSON Komut Paketi"]
-        K -- "Tam Eslesme Yok" --> L{"Yol 2:\nFonetik Regex Motoru"}
-        L -- "Kural Eslesmesi Var (<1 ms)" --> Q
-        L -- "Kural Eslesmesi Yok" --> M["Yol 3: Yerel LLM\n(Qwen2.5-0.5B Instruct)"]
-        M --> N["Siki GBNF JSON\nGramer Denetimi"]
-        N --> O{"Guvenlik Kapisi 2:\nPost-LLM Tutarlilik"}
-        O -- "Girdiyle Ortusmuyor" --> J
-        O -- "Mantiksal Dogrulandi (~700 ms)" --> P["Yeni Komutu\nCache Dosyasina Ekle"]
-        P --> Q
+        B1["1. Guvenlik Kapisi 1\n(Pre-LLM Baglam Filtresi)"]
+        B1 --> B2["2. Yol 1: Dinamik Cache\n(Tam Eslesme <0.1 ms)"]
+        B2 --> B3["3. Yol 2: Fonetik Regex\n(Kural Tabanli <1 ms)"]
+        B3 --> B4["4. Yol 3: Yerel LLM\n(Qwen2.5-0.5B ~700 ms)"]
+        B4 --> B5["5. Siki GBNF JSON Grameri\n(Cihaz/Aksiyon Siniri)"]
+        B5 --> B6["6. Guvenlik Kapisi 2\n(Post-LLM Tutarlilik)"]
+        B6 --> B7["7. Yapilandirilmis JSON Cikti\n({cihaz, aksiyon, deger})"]
     end
 
-    subgraph Katman3 ["III. IoT Iletisimi ve Geri Bildirim Katmani"]
+    subgraph Katman3 ["III. Cikti, MQTT ve Geri Bildirim"]
         direction TB
-        R["Bekleme Odasi\n(Thread-Safe Teyit Kuyrugu)"] --> S["MQTT Publisher\n(Topic: ev/{cihaz}/komut)"]
-        S --> T["IoT Cihaz Simulatoru\n(iot_sim/sanal_cihazlar.py)"]
-        T --> U["Cihaz Eylemi Uygular\nve Teyit Yayinlar\n(Topic: ev/{cihaz}/durum)"]
-        U --> V["MQTT Listener\n(Asistan Dinleyici Thread)"]
-        V --> W["Toplam Islem Suresi Olcumu\n(STT + AI + MQTT)"]
-        W --> X["Yerel TTS Sesli Geri Bildirim\n(Piper TTS)"]
-        X --> Y["Bekci Moduna Donus\n(openWakeWord Reset)"]
+        C1["1. Bekleme Odasi\n(Teyit ve Gecikme Kuyrugu)"]
+        C1 --> C2["2. MQTT Publisher\n(Topic: ev/{cihaz}/komut)"]
+        C2 --> C3["3. IoT Donanim Simulatoru\n(sanal_cihazlar.py)"]
+        C3 --> C4["4. Donanim Teyit Mesaji\n(Topic: ev/{cihaz}/durum)"]
+        C4 --> C5["5. MQTT Dinleyici Thread\n(asistan_listener)"]
+        C5 --> C6["6. Toplam Sure Hesabi\n(STT + AI + MQTT ms)"]
+        C6 --> C7["7. Dogal Yerel TTS\n(Piper TTS tr_TR-fahrettin)"]
+        C7 --> C8["8. Bekci Moduna Reset\n(openWakeWord Sifirlama)"]
     end
 
-    H --> I
-    Q --> R
-    Y -.-> B
+    A7 --> B1
+    B7 --> C1
+    C8 -.-> A2
 ```
 
 Proje kok dizininde yer alan detayli gorsel diyagramlar:
